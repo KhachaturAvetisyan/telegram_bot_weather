@@ -1,8 +1,13 @@
 import pyowm
 
-city = "New York, USA"
+city = "Vanadzor, ARM"
 
 owm = pyowm.OWM("9b6cbef84565796f8f8e2c2d0f05f5e2")
-temp = owm.weather_manager().weather_at_place(city).whether.temprature('celsius')['temp']
+mgr = owm.weather_manager()
 
-print(str(temp))
+observation = mgr.weather_at_place(city)
+w = observation.weather
+
+temp = w.temperature('celsius')['temp']
+
+print((temp))
