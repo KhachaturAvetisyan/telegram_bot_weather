@@ -26,7 +26,26 @@ async def process_help_command(message: types.Message):
 
 @dp.message_handler(commands=['weather'])
 async def process_start_command(msg: types.Message):
-    await bot.send_message(msg.from_user.id, "Привет!\nНапиши мне что-нибудь!") 
+    await bot.send_message(msg.from_user.id, "Введите город.") 
+
+    @dp.message_handler(content_types=['text'])
+    async def print_city(message):
+        print(message.text)
+        await temp_at_city(message.text)
+
+
+    async def temp_at_city(city):
+
+        owm = pyowm.OWM("9b6cbef84565796f8f8e2c2d0f05f5e2")
+        mgr = owm.weather_manager()
+
+        observation = mgr.weather_at_place(city)
+        w = observation.weather
+
+        temp_cels = w.temperature('celsius')['temp']
+        temp_far = w.temperature('fahrenheit')['temp']
+
+        await bot.send_message(msg.from_user.id, f"tempriture in celsius = {temp_cels}\ntempriture in farengate = {temp_far}") 
 
 
 if __name__ == '__main__':
