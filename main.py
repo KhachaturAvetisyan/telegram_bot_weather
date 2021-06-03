@@ -1,4 +1,3 @@
-from aiogram.types import message
 import pyowm
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
@@ -27,6 +26,7 @@ async def process_help_command(message: types.Message):
 
 @dp.message_handler(commands=['weather'])
 async def process_start_command(msg: types.Message):
+    print(msg.get_args())
     try:
         owm = pyowm.OWM(TOKEN_OWM)
         mgr = owm.weather_manager()
@@ -38,6 +38,8 @@ async def process_start_command(msg: types.Message):
         temp_far = w.temperature('fahrenheit')['temp']
 
         await msg.reply(f"tempriture in celsius = {temp_cels}°C\ntempriture in farengate = {temp_far}°F", reply=False)
+    except pyowm.commons.exceptions.APIRequestError:
+        await msg.reply("Вы не написали город пожалуйста напишхите рядом с комондой /weather название города. ))", reply=False)
     except:
         await msg.reply("Я не знаю что это за город !!))", reply=False)
 
