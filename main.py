@@ -1,9 +1,10 @@
+from aiogram.types import message
 import pyowm
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 
-from config import TOKEN
+from config import TOKEN, TOKEN_OWM
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
@@ -16,7 +17,7 @@ async def process_start_command(msg: types.Message):
 
 @dp.message_handler(commands=['help'])
 async def process_help_command(message: types.Message):
-    await message.reply("Напиши мне что-нибудь, и я отпрпавлю этот текст тебе в ответ!")
+    await message.reply("Напиши мне что-нибудь, и я отпрпавлю этот текст тебе в ответ!", reply=False)
 
 
 # @dp.message_handler()
@@ -26,26 +27,19 @@ async def process_help_command(message: types.Message):
 
 @dp.message_handler(commands=['weather'])
 async def process_start_command(msg: types.Message):
-    await bot.send_message(msg.from_user.id, "Введите город.") 
-
-    @dp.message_handler(content_types=['text'])
-    async def print_city(message):
-        print(message.text)
-        await temp_at_city(message.text)
-
-
-    async def temp_at_city(city):
-
-        owm = pyowm.OWM("9b6cbef84565796f8f8e2c2d0f05f5e2")
+    try:
+        owm = pyowm.OWM(TOKEN_OWM)
         mgr = owm.weather_manager()
 
-        observation = mgr.weather_at_place(city)
+        observation = mgr.weather_at_place(msg.get_args())
         w = observation.weather
 
         temp_cels = w.temperature('celsius')['temp']
         temp_far = w.temperature('fahrenheit')['temp']
 
-        await bot.send_message(msg.from_user.id, f"tempriture in celsius = {temp_cels}\ntempriture in farengate = {temp_far}") 
+        await msg.reply(f"tempriture in celsius = {temp_cels}°C\ntempriture in farengate = {temp_far}°F", reply=False)
+    except:
+        await msg.reply("Я не знаю что это за город !!))", reply=False)
 
 
 if __name__ == '__main__':
