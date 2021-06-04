@@ -13,17 +13,12 @@ dp = Dispatcher(bot)
 
 @dp.message_handler(commands=['start'])
 async def process_start_command(msg: types.Message):
-    await bot.send_message(msg.from_user.id, "Привет!\nНапиши мне что-нибудь!")
+    await bot.send_message(msg.from_user.id, "Привет!")
 
 
 @dp.message_handler(commands=['help'])
 async def process_help_command(message: types.Message):
-    await message.reply("Напиши мне что-нибудь, и я отпрпавлю этот текст тебе в ответ!", reply=False)
-
-
-# @dp.message_handler()
-# async def echo_message(msg: types.Message):
-#     await bot.send_message(msg.from_user.id, msg.text)
+    await message.reply("Напиши мне что-нибудь!)", reply=False)
 
 
 @dp.message_handler(commands=['weather'])
@@ -83,7 +78,7 @@ async def process_start_command(msg: types.Message):
             reply=False)
 
     except commons.exceptions.APIRequestError:
-        await msg.reply("Вы не написали город пожалуйста напишхите рядом с комондой /weather название города. ))", reply=False)
+        await msg.reply("Вы не написали название города, пожалуйста напишите рядом с комондой /weather название города. ))", reply=False)
 
     except:
         await msg.reply("Я не знаю что это за город !!))", reply=False)
