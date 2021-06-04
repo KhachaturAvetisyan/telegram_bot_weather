@@ -1,18 +1,35 @@
 import datetime
-
 from pyowm import OWM, commons
+
+from aiogram.types import user
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
 from config import TOKEN, TOKEN_OWM
 
+# pyowm weather
+owm = OWM(TOKEN_OWM)
+mgr = owm.weather_manager()
+
+# firebase
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
+
+db = firestore.client()
+
+# aiogram telegram_bot
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
 
 @dp.message_handler(commands=['start'])
 async def process_start_command(msg: types.Message):
+    print(type(msg.from_user.id))
     await bot.send_message(msg.from_user.id, "Привет!")
 
 
@@ -21,13 +38,21 @@ async def process_help_command(message: types.Message):
     await message.reply("Напиши мне что-нибудь!)", reply=False)
 
 
-@dp.message_handler(commands=['weather'])
-async def process_start_command(msg: types.Message):
-    # print(msg.get_args())
+def is_place(city, command):
     try:
-        city = msg.get_args()
-        owm = OWM(TOKEN_OWM)
-        mgr = owm.weather_manager()
+        observation = mgr.weather_at_place(city)
+        return None, True
+    except commons.exceptions.APIRequestError:
+        return f"Вы не написали название города, пожалуйста напишите рядом с комондой {command} название города.", False
+
+    except:
+        return f"Я не знаю что это за город, пожалуйста напишите рядом с комондой {command} название города !!", False
+
+
+def weather_at_place(city, command):
+    error_text, flag = is_place(city, command)
+    if flag:
+
         observation = mgr.weather_at_place(city)
         w = observation.weather
 
@@ -44,7 +69,7 @@ async def process_start_command(msg: types.Message):
         # Статус
         status = w.status
         # Время
-        time = w.reference_time('iso')
+        time = datetime.datetime.fromtimestamp(w.reference_time())
         # Давление
         pressure = w.pressure['press']
         # Видимость
@@ -65,8 +90,8 @@ async def process_start_command(msg: types.Message):
             "Mist": "Туман \U0001F32B"
         }
 
-        await msg.reply(
-            f"Время: {time}\n"
+        return(
+            f"Время прогноза: {time}\n"
             f"В городе {city.capitalize()} температура: {temp_cels}C°, ощущается как: {temp_feels}C°\n"
             f"Максимальная температура: {temp_max}C°, минимальная температура: {temp_min}C°.\n"
             f"Скорость ветера: {wind}м/с\n"
@@ -74,15 +99,38 @@ async def process_start_command(msg: types.Message):
             f"Давление: {pressure} мм.рт.ст\n"
             f"Восход солнца: {sunrise_time}\nЗакат солнца: {sunset_time}\nПродолжительность дня: {length_of_the_day}\n"
             f"Видимость: {vis_dis} м\n"
-            f"Статус: {code_to_smile[status]}", 
-            reply=False)
+            f"Статус: {code_to_smile[status]}" 
+        )
 
-    except commons.exceptions.APIRequestError:
-        await msg.reply("Вы не написали название города, пожалуйста напишите рядом с комондой /weather название города. ))", reply=False)
-
-    except:
-        await msg.reply("Я не знаю что это за город !!))", reply=False)
+    else:
+        return error_text
+            
 
 
+@dp.message_handler(commands=['weather_at_place'])
+async def process_start_command(msg: types.Message):
+    city = msg.get_args()
+    await msg.reply(weather_at_place(city, "/weather_at_place"), reply=False)
+
+
+@dp.message_handler(commands=['set_place'])
+async def process_start_command(msg: types.Message):
+    city = msg.get_args().capitalize()
+
+    error_text, flag = is_place(city, "/set_place")
+
+    if flag:
+
+        doc_ref = db.collection(u'user').document(str(msg.from_user.id))
+        doc_ref.set({
+            u'city': city
+        })
+
+        await msg.reply(f"Город {city} добавлен в избранные.", reply=False)
+
+    else:
+        await msg.reply(error_text, reply=False)
+
+    
 if __name__ == '__main__':
     executor.start_polling(dp)
