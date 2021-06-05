@@ -51,8 +51,8 @@ def is_place(city, command):
 
 def weather_at_place(city, command=""):
     error_text, flag = is_place(city, command)
+    
     if flag:
-
         observation = mgr.weather_at_place(city)
         w = observation.weather
 
