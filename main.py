@@ -49,7 +49,7 @@ def is_place(city, command):
         return f"Я не знаю что это за город, пожалуйста напишите рядом с комондой {command} название города !!", False
 
 
-def weather_at_place(city, command):
+def weather_at_place(city, command=""):
     error_text, flag = is_place(city, command)
     if flag:
 
@@ -103,8 +103,7 @@ def weather_at_place(city, command):
         )
 
     else:
-        return error_text
-            
+        return error_text    
 
 
 @dp.message_handler(commands=['weather_at_place'])
@@ -120,7 +119,6 @@ async def process_start_command(msg: types.Message):
     error_text, flag = is_place(city, "/set_place")
 
     if flag:
-
         doc_ref = db.collection(u'user').document(str(msg.from_user.id))
         doc_ref.set({
             u'city': city
@@ -131,6 +129,16 @@ async def process_start_command(msg: types.Message):
     else:
         await msg.reply(error_text, reply=False)
 
-    
+
+@dp.message_handler(commands=['weather'])
+async def process_start_command(msg: types.Message):
+    users_ref = db.collection(u'user')
+    result = users_ref.document(str(msg.from_user.id)).get()
+
+    if result.exists:
+        await msg.reply(weather_at_place(result.to_dict()['city']), reply=False)
+    else:
+        await msg.reply("У вас нету избранного города, пожалуйста довте спощю команды /set_place.", reply=False)
+
 if __name__ == '__main__':
     executor.start_polling(dp)

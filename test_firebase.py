@@ -17,8 +17,14 @@ doc_ref.set({
 
 # Читаем базу данных
 users_ref = db.collection(u'user')
-docs = users_ref.stream()
+# docs = users_ref.stream()
 
-for doc in docs:
+doc = users_ref.document(u'817332557').get()
+if doc.exists:
+    print(type(doc.to_dict()['city']))
+else:
+    print("error")
+
+# for doc in docs:
     # print(f'{doc.id} => {doc.to_dict()}')
-	print(doc.to_dict()['city'])
+	# print(doc.to_dict()['city'])
