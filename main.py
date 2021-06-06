@@ -10,6 +10,10 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 
+from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+
 from config import TOKEN, TOKEN_OWM
 
 # pyowm weather
@@ -24,7 +28,11 @@ db = firestore.client()
 
 # aiogram telegram_bot
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher(bot, storage=MemoryStorage())
+
+# state
+class reg_city(StatesGroup):
+    city = State()
 
 
 @dp.message_handler(commands=['start'])
@@ -139,6 +147,16 @@ async def process_start_command(msg: types.Message):
         await msg.reply(weather_at_place(result.to_dict()['city']), reply=False)
     else:
         await msg.reply("У вас нету избранного города, пожалуйста довте спощю команды /set_place.", reply=False)
+
+
+@dp.message_handler(state=reg_city.city)
+async def answer_city(message: types.Message, state: FSMContext):
+    city = message.text
+    # await state.update_data(answer1=answer)
+    print(city)
+    # user_data = await state.get_data()
+    await state.finish()
+
 
 if __name__ == '__main__':
     executor.start_polling(dp)
